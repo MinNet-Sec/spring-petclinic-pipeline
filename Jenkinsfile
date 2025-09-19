@@ -10,25 +10,20 @@ pipeline {
   agent any
 
   tools {
-    // If (and only if) you created a JDK tool named "jdk17" under
-    // Manage Jenkins → Tools → JDK installations, you can uncomment this:
-    // jdk 'jdk17'
-    //
-    // Otherwise, we rely on the system Java on the agent.
-    maven 'maven3'   // Manage Jenkins → Tools → Maven installations (name must match)
+    maven 'maven3'   // Manage Jenkins → Tools → Maven installations 
   }
 
   options {
-    timestamps()                 // add timestamps in console
-    ansiColor('xterm')           // coloured logs (requires AnsiColor plugin)
+    timestamps()                 
+    ansiColor('xterm')          
     buildDiscarder(logRotator(numToKeepStr: '15')) // keep last 15 builds
   }
 
   environment {
-    // (Optional) Centralize these if you like; you can also hardcode in the stage command
+   
     SONAR_HOST_URL     = 'https://sonarcloud.io'
-    SONAR_ORG          = 'minnet-sec'                       //  SonarCloud organization key (lowercase)
-    SONAR_PROJECT_KEY  = 'MinNet-Sec_spring-petclinic-pipeline' //  SonarCloud project key (exact)
+    SONAR_ORG          = 'minnet-sec'                       
+    SONAR_PROJECT_KEY  = 'MinNet-Sec_spring-petclinic-pipeline' 
   }
 
   stages {
@@ -69,8 +64,7 @@ pipeline {
     stage('Code Quality (SonarCloud)') {
       steps {
         echo '\n================== ENTERING: CODE QUALITY (SONARCLOUD) ==================\n'
-        // You must have configured "SonarCloud" under Manage Jenkins → System → SonarQube servers
-        // and disabled "Automatic Analysis" in the SonarCloud UI (Project Settings → Analysis Method → CI-based).
+  
         withSonarQubeEnv('SonarCloud') {
           bat """
             mvn -B -DskipTests sonar:sonar ^
@@ -80,7 +74,7 @@ pipeline {
           """
         }
       }
-      // (Optional) You can add waitForQualityGate() here if you configured webhooks.
+      
     }
 
     stage('Security (OWASP Dependency-Check)') {
