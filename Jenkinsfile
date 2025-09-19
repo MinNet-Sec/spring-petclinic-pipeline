@@ -3,7 +3,7 @@ pipeline {
   tools { maven 'maven3' }  // Maven name registered in Manage Jenkins > Tools
   options {
     timestamps()
-    ansiColor('xterm')
+    
   }
   stages {
     stage('Checkout') {
