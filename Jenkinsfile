@@ -79,7 +79,6 @@ pipeline {
             mvn -B org.owasp:dependency-check-maven:9.2.0:check ^
               -DskipTests ^
               -Dnvd.api.key=%NVD_API_KEY% ^
-              //-DdataDirectory=target\\owasp-dc-data ^
               -Dnvd.api.delay=1000 ^
               -Dformats=HTML,XML,JSON ^
               -DfailOnError=true
