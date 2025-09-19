@@ -1,3 +1,10 @@
+properties([
+  parameters([
+    booleanParam(name: 'SECURITY_ONLY', defaultValue: false,
+      description: 'Checkout + Pre-Clean + OWASP Dependency-Check만 실행')
+  ])
+])
+
 pipeline {
   agent any
 
