@@ -1,6 +1,10 @@
 pipeline {
   agent any
-    
+  tools { maven 'maven3' }  // Maven name registered in Manage Jenkins > Tools
+  options {
+    timestamps()
+    ansiColor('xterm')
+  }
   stages {
     stage('Checkout') {
       steps {
@@ -9,20 +13,19 @@ pipeline {
     }
     stage('Build (Maven)') {
       steps {
-        // Since this is a Windows agent, use bat instead of sh
+        // Skip tests and generate only the JAR artifact
         bat 'mvn -B -DskipTests clean package'
-        // Message to verify build artifact
-        echo 'Build artifact should be under target/*.jar'
+        // Archive the generated JAR (can be checked under Artifacts on the left side of the console)
+        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
       }
     }
-      
     stage('Test (JUnit)') {
       steps {
         bat 'mvn -B test'
       }
       post {
         always {
-          // Collect JUnit reports (records failures as well)
+          // Collect JUnit reports created by Maven Surefire
           junit 'target/surefire-reports/*.xml'
         }
       }
