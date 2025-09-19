@@ -2,10 +2,7 @@ pipeline {
   agent any
   tools { maven 'maven3' }
 
-  options {
-    timestamps()          
-    ansiColor('xterm')  
-  }
+  options { timestamps() }
 
   stages {
     stage('Checkout') { steps { checkout scm } }
@@ -21,10 +18,24 @@ pipeline {
       steps { bat 'mvn -B test' }
       post { always { junit 'target/surefire-reports/*.xml' } }
     }
+
+
+    stage('Code Quality (SonarCloud)') {
+      steps {
+        withSonarQubeEnv('SonarCloud') {   //  name from Manage Jenkins > System 
+          bat '''
+            mvn -B -DskipTests sonar:sonar ^
+              -Dsonar.projectKey=MinNet-Sec_spring-petclinic-pipeline ^
+              -Dsonar.organization=MinNet-Sec ^
+              -Dsonar.host.url=https://sonarcloud.io
+          '''
+        }
+      }
+    }
   }
 
   post {
-    success { echo 'Build & Test succeeded ' }
-    failure { echo 'Build or Test failed  — check Console Output' }
+    success { echo 'Build, Test, Code Quality all succeeded ' }
+    failure { echo 'Something failed — check Console Output ' }
   }
 }
