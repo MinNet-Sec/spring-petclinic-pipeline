@@ -26,7 +26,7 @@ pipeline {
           bat '''
             mvn -B -DskipTests sonar:sonar ^
               -Dsonar.projectKey=MinNet-Sec_spring-petclinic-pipeline ^
-              -Dsonar.organization=MinNet-Sec ^
+              -Dsonar.organization=minnet-sec ^
               -Dsonar.host.url=https://sonarcloud.io
           '''
         }
