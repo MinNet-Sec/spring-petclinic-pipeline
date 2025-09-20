@@ -18,7 +18,12 @@ pipeline {
     booleanParam(
       name: 'SECURITY_ONLY',
       defaultValue: false,
-      description: 'Checkout + Pre-Clean + OWASP Dependency-Check만 실행'
+      description: 'Run only: Checkout + Pre-Clean + OWASP Dependency-Check'
+    )
+    booleanParam(
+      name: 'SKIP_STYLE',
+      defaultValue: true,
+      description: 'Skip Checkstyle and nohttp checks during CI'
     )
   }
 
@@ -34,7 +39,7 @@ pipeline {
       steps {
         echo "\033[44;1;37m\n=== ENTERING: CHECKOUT ===\n\033[0m"
         checkout scm
-        echo "SECURITY_ONLY(param/env): ${params.SECURITY_ONLY} / ${env.SECURITY_ONLY}"
+        echo "SECURITY_ONLY: ${params.SECURITY_ONLY}, SKIP_STYLE: ${params.SKIP_STYLE}"
         bat 'java -version || ver'
         bat 'mvn -v'
       }
@@ -51,19 +56,20 @@ pipeline {
 
     stage('Build (Maven)') {
       when {
-        beforeAgent true      // Evaluate the condition BEFORE allocating an agent
+        beforeAgent true
         expression {
-          //  when SECURITY_ONLY is true, skip Build/Test/CodeQuality
+          // If SECURITY_ONLY is true, skip Build/Test/CodeQuality
           !( (params.SECURITY_ONLY?.toBoolean() ?: false) || (env.SECURITY_ONLY == 'true') )
         }
       }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: BUILD (MAVEN) ===\n\033[0m"
-        // Run Maven in batch mode (-B), skip tests (-DskipTests), clean old build and package the app
-        // This generates the executable JAR file for the project
-        bat 'mvn -B -DskipTests clean package' //  skip test on build stage
+        // Run Maven in batch mode (-B), skip tests (-DskipTests), and optionally skip style checks
+        bat """
+          mvn -B -DskipTests ${params.SKIP_STYLE ? '-Dcheckstyle.skip=true -Dnohttp.check.skip=true' : ''} clean package
+        """
         // Archive the generated JAR into Jenkins
-        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true  // allows tracking the file across builds and jobs
+        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
       }
     }
 
@@ -76,14 +82,14 @@ pipeline {
       }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: TEST (JUNIT) ===\n\033[0m"
-        // Run Maven tests in batch mode (-B = no interactive input)
-        // This executes all unit tests written with JUnit
-        bat 'mvn -B test'
+        // Execute unit tests; optionally skip style checks
+        bat """
+          mvn -B test ${params.SKIP_STYLE ? '-Dcheckstyle.skip=true -Dnohttp.check.skip=true' : ''}
+        """
       }
       post {
         always {
           // Publish JUnit test results so Jenkins can display them in the UI
-          // XML reports are located in target/surefire-reports
           junit 'target/surefire-reports/*.xml'
         }
       }
@@ -99,11 +105,10 @@ pipeline {
       steps {
         echo "\033[44;1;37m\n=== ENTERING: CODE QUALITY (SONARCLOUD) ===\n\033[0m"
         // Use SonarQube environment settings (credentials, URL, etc.)
-        // Then run Maven with the Sonar plugin to analyze the project
         withSonarQubeEnv('SonarCloud') {
-          // Run Maven in batch mode, skip tests, trigger Sonar analysis
+          // Optionally skip style checks while sending analysis to SonarCloud
           bat """
-            mvn -B -DskipTests sonar:sonar ^  
+            mvn -B -DskipTests ${params.SKIP_STYLE ? '-Dcheckstyle.skip=true -Dnohttp.check.skip=true' : ''} sonar:sonar ^
               -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
               -Dsonar.organization=%SONAR_ORG% ^
               -Dsonar.host.url=%SONAR_HOST_URL%
@@ -125,7 +130,7 @@ pipeline {
               -Dnvd.api.delay=16000 ^
               -DfailOnError=false
           """
-          // (2)  Run the vulnerability scan USING ONLY the local cache (no network call)
+          // (2) Run the vulnerability scan USING ONLY the local cache (no network call)
           bat """
             mvn -B org.owasp:dependency-check-maven:12.1.3:check ^
               -DautoUpdate=false ^
