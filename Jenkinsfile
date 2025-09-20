@@ -1,14 +1,17 @@
 pipeline {
+  // Run this pipeline on any available Jenkins agent node
   agent any
 
   tools {
+    // Use Maven tool (configured as 'maven3' in Jenkins global tool settings)
     maven 'maven3'
   }
 
   options {
     timestamps()
+    // Enable ANSI color codes in console log for colored output
     ansiColor('xterm')
-    buildDiscarder(logRotator(numToKeepStr: '15'))
+    buildDiscarder(logRotator(numToKeepStr: '15')) // Keep only the last 15 build records
   }
 
   parameters {
@@ -23,7 +26,7 @@ pipeline {
     SONAR_HOST_URL    = 'https://sonarcloud.io'
     SONAR_ORG         = 'minnet-sec'
     SONAR_PROJECT_KEY = 'MinNet-Sec_spring-petclinic-pipeline'
-    ODC_DATA_DIR      = "${WORKSPACE}\\odc-data"
+    ODC_DATA_DIR      = "${WORKSPACE}\\odc-data"  // Local folder for OWASP Dependency-Check cache/data
   }
 
   stages {
