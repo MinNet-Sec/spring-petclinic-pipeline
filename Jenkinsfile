@@ -98,9 +98,11 @@ pipeline {
       }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: CODE QUALITY (SONARCLOUD) ===\n\033[0m"
+        // Use SonarQube environment settings (credentials, URL, etc.)
+        // Then run Maven with the Sonar plugin to analyze the project
         withSonarQubeEnv('SonarCloud') {
           bat """
-            mvn -B -DskipTests sonar:sonar ^
+            mvn -B -DskipTests sonar:sonar ^  // Run Maven in batch mode, skip tests, trigger Sonar analysis
               -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
               -Dsonar.organization=%SONAR_ORG% ^
               -Dsonar.host.url=%SONAR_HOST_URL%
@@ -112,8 +114,9 @@ pipeline {
     stage('Security (OWASP Dependency-Check)') {
       steps {
         echo "\033[44;1;37m\n=== ENTERING: SECURITY (OWASP DEPENDENCY-CHECK) ===\n\033[0m"
+        // Securely load the NVD API key from Jenkins Credentials
         withCredentials([string(credentialsId: 'NVD_API_KEY', variable: 'NVD_API_KEY')]) {
-          // (1) 캐시 업데이트
+          // (1) Update the local NVD/CVE cache into ODC_DATA_DIR (reduces rate-limit issues)
           bat """
             mvn -B org.owasp:dependency-check-maven:12.1.3:update-only ^
               -DdataDirectory="%ODC_DATA_DIR%" ^
@@ -121,7 +124,7 @@ pipeline {
               -Dnvd.api.delay=16000 ^
               -DfailOnError=false
           """
-          // (2) 캐시로만 스캔
+          // (2)  Run the vulnerability scan USING ONLY the local cache (no network call)
           bat """
             mvn -B org.owasp:dependency-check-maven:12.1.3:check ^
               -DautoUpdate=false ^
@@ -133,6 +136,7 @@ pipeline {
       }
       post {
         always {
+          // Archive generated reports so they are downloadable from Jenkins
           archiveArtifacts artifacts: 'target/dependency-check-report.*', fingerprint: true, allowEmptyArchive: true
         }
       }
