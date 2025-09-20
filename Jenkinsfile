@@ -53,7 +53,7 @@ pipeline {
       when {
         beforeAgent true
         expression {
-          // 앞단 스킵 여부: SECURITY_ONLY가 true면 Build/Test/CodeQuality는 건너뜀
+          //  when SECURITY_ONLY is true, skip Build/Test/CodeQuality
           !( (params.SECURITY_ONLY?.toBoolean() ?: false) || (env.SECURITY_ONLY == 'true') )
         }
       }
