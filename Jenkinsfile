@@ -101,8 +101,9 @@ pipeline {
         // Use SonarQube environment settings (credentials, URL, etc.)
         // Then run Maven with the Sonar plugin to analyze the project
         withSonarQubeEnv('SonarCloud') {
+          // Run Maven in batch mode, skip tests, trigger Sonar analysis
           bat """
-            mvn -B -DskipTests sonar:sonar ^  // Run Maven in batch mode, skip tests, trigger Sonar analysis
+            mvn -B -DskipTests sonar:sonar ^  
               -Dsonar.projectKey=%SONAR_PROJECT_KEY% ^
               -Dsonar.organization=%SONAR_ORG% ^
               -Dsonar.host.url=%SONAR_HOST_URL%
