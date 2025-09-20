@@ -51,7 +51,7 @@ pipeline {
 
     stage('Build (Maven)') {
       when {
-        beforeAgent true
+        beforeAgent true      // Evaluate the condition BEFORE allocating an agent
         expression {
           //  when SECURITY_ONLY is true, skip Build/Test/CodeQuality
           !( (params.SECURITY_ONLY?.toBoolean() ?: false) || (env.SECURITY_ONLY == 'true') )
@@ -59,8 +59,11 @@ pipeline {
       }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: BUILD (MAVEN) ===\n\033[0m"
-        bat 'mvn -B -DskipTests clean package'
-        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true
+        // Run Maven in batch mode (-B), skip tests (-DskipTests), clean old build and package the app
+        // This generates the executable JAR file for the project
+        bat 'mvn -B -DskipTests clean package' //  skip test on build stage
+        // Archive the generated JAR into Jenkins
+        archiveArtifacts artifacts: 'target/*.jar', fingerprint: true  // allows tracking the file across builds and jobs
       }
     }
 
