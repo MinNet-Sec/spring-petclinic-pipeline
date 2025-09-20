@@ -76,10 +76,14 @@ pipeline {
       }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: TEST (JUNIT) ===\n\033[0m"
+        // Run Maven tests in batch mode (-B = no interactive input)
+        // This executes all unit tests written with JUnit
         bat 'mvn -B test'
       }
       post {
         always {
+          // Publish JUnit test results so Jenkins can display them in the UI
+          // XML reports are located in target/surefire-reports
           junit 'target/surefire-reports/*.xml'
         }
       }
