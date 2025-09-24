@@ -16,11 +16,6 @@ pipeline {
 
   parameters {
     booleanParam(
-      name: 'SECURITY_ONLY',
-      defaultValue: false,
-      description: 'Run only: Checkout + Pre-Clean + OWASP Dependency-Check'
-    )
-    booleanParam(
       name: 'SKIP_STYLE',
       defaultValue: true,
       description: 'Skip Checkstyle and nohttp checks during CI'
@@ -39,7 +34,7 @@ pipeline {
       steps {
         echo "\033[44;1;37m\n=== ENTERING: CHECKOUT ===\n\033[0m"
         checkout scm
-        echo "SECURITY_ONLY: ${params.SECURITY_ONLY}, SKIP_STYLE: ${params.SKIP_STYLE}"
+        echo "SKIP_STYLE: ${params.SKIP_STYLE}"
         bat 'java -version || ver'
         bat 'mvn -v'
       }
@@ -55,13 +50,6 @@ pipeline {
     }
 
     stage('Build (Maven)') {
-      when {
-        beforeAgent true
-        expression {
-          // If SECURITY_ONLY is true, skip Build/Test/CodeQuality
-          !( (params.SECURITY_ONLY?.toBoolean() ?: false) || (env.SECURITY_ONLY == 'true') )
-        }
-      }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: BUILD (MAVEN) ===\n\033[0m"
         // Run Maven in batch mode (-B), skip tests (-DskipTests), and optionally skip style checks
@@ -74,17 +62,11 @@ pipeline {
     }
 
     stage('Test (JUnit)') {
-      when {
-        beforeAgent true
-        expression {
-          !( (params.SECURITY_ONLY?.toBoolean() ?: false) || (env.SECURITY_ONLY == 'true') )
-        }
-      }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: TEST (JUNIT) ===\n\033[0m"
         // Execute unit tests; optionally skip style checks
         bat """
-          mvn -B test ${params.SKIP_STYLE ? '-Dcheckstyle.skip=true -Dnohttp.check.skip=true' : ''}
+          mvn -B test ${params.SKIP_STYLE ? '-Dcheckstyle.skip=true -Dnohttp.check.skip=true' : ''} 
         """
       }
       post {
@@ -96,12 +78,6 @@ pipeline {
     }
 
     stage('Code Quality (SonarCloud)') {
-      when {
-        beforeAgent true
-        expression {
-          !( (params.SECURITY_ONLY?.toBoolean() ?: false) || (env.SECURITY_ONLY == 'true') )
-        }
-      }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: CODE QUALITY (SONARCLOUD) ===\n\033[0m"
         // Use SonarQube environment settings (credentials, URL, etc.)
@@ -150,7 +126,6 @@ pipeline {
     }
 
     stage('Deploy (Local CMD)') {
-      when { expression { return !params.SECURITY_ONLY } }
       steps {
         echo "\033[44;1;37m\n=== ENTERING: DEPLOY (LOCAL CMD) ===\n\033[0m"
         bat '''
@@ -163,12 +138,11 @@ pipeline {
   }
 
   post {
-  success { 
-    echo "\033[42;1;37m\n=== PIPELINE COMPLETED SUCCESSFULLY ===\n\033[0m"
+    success { 
+      echo "\033[42;1;37m\n=== PIPELINE COMPLETED SUCCESSFULLY ===\n\033[0m"
+    }
+    failure { 
+      echo "\033[41;1;37m\n=== PIPELINE FAILED — SEE CONSOLE OUTPUT FOR DETAILS ===\n\033[0m"
+    }
   }
-  failure { 
-    echo "\033[41;1;37m\n=== PIPELINE FAILED — SEE CONSOLE OUTPUT FOR DETAILS ===\n\033[0m"
-  }
-}
-
 }
