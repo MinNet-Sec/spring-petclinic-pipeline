@@ -147,6 +147,18 @@ pipeline {
         }
       }
     }
+
+    stage('Deploy (Local CMD)') {
+      when { expression { return !params.SECURITY_ONLY } }
+      steps {
+        echo '=== ENTERING: DEPLOY (LOCAL CMD) ==='
+        bat '''
+        echo %DATE% %TIME% - Deploy stage sanity check
+        echo WORKSPACE=%WORKSPACE%
+        dir "target"
+        '''
+      }
+    }
   }
 
   post {
