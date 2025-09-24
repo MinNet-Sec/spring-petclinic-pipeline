@@ -152,7 +152,7 @@ pipeline {
     stage('Deploy (Local CMD)') {
       when { expression { return !params.SECURITY_ONLY } }
       steps {
-        echo '=== ENTERING: DEPLOY (LOCAL CMD) ==='
+        echo "\033[44;1;37m\n=== ENTERING: DEPLOY (LOCAL CMD) ===\n\033[0m"
         bat '''
         echo %DATE% %TIME% - Deploy stage sanity check
         echo WORKSPACE=%WORKSPACE%
@@ -163,7 +163,12 @@ pipeline {
   }
 
   post {
-    success { echo '\nBuild, tests, and checks succeeded.\n' }
-    failure { echo '\nSomething failed — check the Console Output.\n' }
+  success { 
+    echo "\033[42;1;37m\n=== PIPELINE COMPLETED SUCCESSFULLY ===\n\033[0m"
   }
+  failure { 
+    echo "\033[41;1;37m\n=== PIPELINE FAILED — SEE CONSOLE OUTPUT FOR DETAILS ===\n\033[0m"
+  }
+}
+
 }
