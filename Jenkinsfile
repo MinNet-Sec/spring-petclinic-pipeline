@@ -20,6 +20,12 @@ pipeline {
       defaultValue: true,
       description: 'Skip Checkstyle and nohttp checks during CI'
     )
+    // SKIP_STYLE parameter:
+    // This option allows skipping Checkstyle and nohttp style checks.
+    // These tools enforce coding standards, but they can slow down the build
+    // or even fail it for minor style issues.
+    // For this educational pipeline, the default is 'true' so the build runs
+    // faster and more reliably. Set to 'false' to enable full style checks.
   }
 
   environment {
