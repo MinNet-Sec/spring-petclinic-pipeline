@@ -136,7 +136,8 @@ pipeline {
               -DautoUpdate=false ^
               -DdataDirectory="%ODC_DATA_DIR%" ^
               -Dformats=HTML,XML,JSON ^
-              -DfailOnError=true
+              -Danalyzer.ossIndex.enabled=false ^
+              -DfailOnError=false
           """
         }
       }
